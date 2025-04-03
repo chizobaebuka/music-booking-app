@@ -1,8 +1,8 @@
 export interface IBooking {
-    id: string; // UUID
-    artistId: string; // Foreign key → User
-    eventId: string; // Foreign key → Event
+    id: string;
+    artist_id: string;
+    event_id: string;
     status: "pending" | "confirmed" | "canceled";
-    createdAt?: Date;
-    updatedAt?: Date;
+    created_at?: Date;
+    updated_at?: Date;
 }

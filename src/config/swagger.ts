@@ -87,10 +87,33 @@ const options = {
               enum: ['pending', 'confirmed', 'canceled'],
               default: 'pending'
             },
+            message: { type: 'string' },
+            price: { type: 'number' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' }
           },
           required: ['artistId', 'eventId']
+        },
+        CreateBookingInput: {
+          type: 'object',
+          properties: {
+            artistId: { type: 'string', format: 'uuid' },
+            eventId: { type: 'string', format: 'uuid' },
+            message: { type: 'string' },
+            price: { type: 'number' }
+          },
+          required: ['artistId', 'eventId']
+        },
+        UpdateBookingStatus: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['confirmed', 'canceled']
+            },
+            message: { type: 'string' }
+          },
+          required: ['status']
         }
       }
     },
@@ -509,10 +532,130 @@ const options = {
           }
         }
       },
+      '/api/events/{id}': {
+        get: {
+          tags: ['Events'],
+          summary: 'Get event by ID',
+          parameters: [
+            {
+              in: 'path',
+              name: 'id',
+              required: true,
+              schema: {
+                type: 'string',
+                format: 'uuid'
+              }
+            }
+          ],
+          responses: {
+            200: {
+              description: 'Event details',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/Event'
+                  }
+                }
+              }
+            },
+            404: {
+              description: 'Event not found'
+            }
+          }
+        },
+        put: {
+          tags: ['Events'],
+          summary: 'Update event',
+          security: [
+            { bearerAuth: [] }
+          ],
+          parameters: [
+            {
+              in: 'path',
+              name: 'id',
+              required: true,
+              schema: {
+                type: 'string',
+                format: 'uuid'
+              }
+            }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', minLength: 2 },
+                    description: { type: 'string' },
+                    location: { type: 'string' },
+                    date: { type: 'string', format: 'date-time' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'Event updated successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/Event'
+                  }
+                }
+              }
+            },
+            401: {
+              description: 'Unauthorized'
+            },
+            403: {
+              description: 'Forbidden - Not the event owner'
+            },
+            404: {
+              description: 'Event not found'
+            }
+          }
+        },
+        delete: {
+          tags: ['Events'],
+          summary: 'Delete event',
+          security: [
+            { bearerAuth: [] }
+          ],
+          parameters: [
+            {
+              in: 'path',
+              name: 'id',
+              required: true,
+              schema: {
+                type: 'string',
+                format: 'uuid'
+              }
+            }
+          ],
+          responses: {
+            200: {
+              description: 'Event deleted successfully'
+            },
+            401: {
+              description: 'Unauthorized'
+            },
+            403: {
+              description: 'Forbidden - Not the event owner'
+            },
+            404: {
+              description: 'Event not found'
+            }
+          }
+        }
+      },
       '/api/bookings': {
         get: {
           tags: ['Bookings'],
-          summary: 'Get all bookings',
+          summary: 'Get all bookings for the authenticated user',
+          security: [{ bearerAuth: [] }],
           responses: {
             200: {
               description: 'List of bookings',
@@ -526,25 +669,71 @@ const options = {
                   }
                 }
               }
+            },
+            401: {
+              description: 'Unauthorized'
             }
           }
         },
         post: {
           tags: ['Bookings'],
-          summary: 'Create new booking',
+          summary: 'Create a new booking request',
+          security: [{ bearerAuth: [] }],
           requestBody: {
             required: true,
             content: {
               'application/json': {
                 schema: {
-                  $ref: '#/components/schemas/Booking'
+                  $ref: '#/components/schemas/CreateBookingInput'
                 }
               }
             }
           },
           responses: {
             201: {
-              description: 'Booking created',
+              description: 'Booking created successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      message: { type: 'string' },
+                      booking: {
+                        $ref: '#/components/schemas/Booking'
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            400: {
+              description: 'Validation error'
+            },
+            401: {
+              description: 'Unauthorized - Only organizers can create bookings'
+            }
+          }
+        }
+      },
+      '/api/bookings/{id}': {
+        get: {
+          tags: ['Bookings'],
+          summary: 'Get a specific booking',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'id',
+              in: 'path',
+              required: true,
+              schema: {
+                type: 'string',
+                format: 'uuid'
+              }
+            }
+          ],
+          responses: {
+            200: {
+              description: 'Booking details',
               content: {
                 'application/json': {
                   schema: {
@@ -552,10 +741,99 @@ const options = {
                   }
                 }
               }
+            },
+            404: {
+              description: 'Booking not found'
+            }
+          }
+        },
+        delete: {
+          tags: ['Bookings'],
+          summary: 'Cancel a booking',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'id',
+              in: 'path',
+              required: true,
+              schema: {
+                type: 'string',
+                format: 'uuid'
+              }
+            }
+          ],
+          responses: {
+            200: {
+              description: 'Booking cancelled successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/Booking'
+                  }
+                }
+              }
+            },
+            401: {
+              description: 'Unauthorized'
+            },
+            403: {
+              description: 'Forbidden - Not authorized to cancel this booking'
+            },
+            404: {
+              description: 'Booking not found'
             }
           }
         }
-      }
+      },
+      '/api/bookings/{id}/status': {
+        put: {
+          tags: ['Bookings'],
+          summary: 'Update booking status (Artist only)',
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'id',
+              in: 'path',
+              required: true,
+              schema: {
+                type: 'string',
+                format: 'uuid'
+              }
+            }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/UpdateBookingStatus'
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'Booking status updated successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      message: { type: 'string' },
+                      booking: {
+                        $ref: '#/components/schemas/Booking'
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            401: {
+              description: 'Unauthorized - Only artists can update booking status'
+            }
+          }
+        }
+      },
     }
   },
   apis: ['./src/routes/*.ts']

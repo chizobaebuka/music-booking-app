@@ -7,6 +7,8 @@ import swaggerUi from 'swagger-ui-express';
 import { specs } from './config/swagger';
 import authRoutes from './routes/auth.routes';
 import artistRoutes from './routes/artist.routes';
+import eventRoutes from './routes/event.routes';
+import bookingRoutes from './routes/booking.routes';
 import { supabase } from './config/supabaseClient';
 
 dotenv.config();
@@ -43,6 +45,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, swaggerOptions));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/artists', artistRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // Root Route
 app.get("/", (req, res) => {
