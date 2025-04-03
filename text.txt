@@ -1,0 +1,44 @@
+Steps for creating the models in supabase
+1. Go to the sql editor and paste in the raw sql for inserting the models
+
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL UNIQUE,
+  password TEXT NOT NULL,
+  role TEXT CHECK (role IN ('artist', 'organizer')) NOT NULL,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE artist_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  stage_name TEXT NOT NULL,
+  bio TEXT,
+  genres TEXT[],
+  availability TEXT[],
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organizer_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  location TEXT NOT NULL,
+  date TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE bookings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  artist_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+  status TEXT CHECK (status IN ('pending', 'confirmed', 'canceled')) NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
+);
+
+2. 
